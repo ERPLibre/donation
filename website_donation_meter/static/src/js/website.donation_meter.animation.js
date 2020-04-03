@@ -3,11 +3,23 @@ odoo.define('website_donation_meter.animation', function (require) {
 
     // var core = require('web.core');
     var sAnimation = require('website.content.snippets.animation');
+    var ProductConfiguratorMixin = require('sale.ProductConfiguratorMixin');
 
-    sAnimation.registry.donation_meter = sAnimation.Class.extend({
+    sAnimation.registry.donation_meter = sAnimation.Class.extend(ProductConfiguratorMixin, {
         selector: '.donation_meter',
         xmlDependencies: [],
         events: {},
+        read_events: {
+            'click #don_100': '_onClickDonate100',
+            'click #don_50': '_onClickDonate50',
+            'click #don_20': '_onClickDonate20',
+            'click #don_10': '_onClickDonate10',
+            'click #don_5': '_onClickDonate5',
+            'click #don_other': '_onClickDonateOther',
+            'click #don_other_final': '_onClickDonateOtherFinal',
+            'click a.js_add_cart_json': '_onClickAddCartJSON',
+            'change input.js_quantity': '_onChangeDonQuantity',
+        },
 
         /**
          * @override
@@ -17,6 +29,11 @@ odoo.define('website_donation_meter.animation', function (require) {
             // var $goal = this.$('.goal_donation_amount');
             // var $progression = this.$('.progress_donation_amount');
             // var $donationError = this.$('.donation_error');
+
+            // TODO set "input" by default at 0
+
+            this.$("#btn_don_other").show();
+            this.$("#btn_don_other_final").hide();
 
             var def = this._rpc({route: '/website_donation_meter/get_amount_donation'}).then(function (data) {
                 // $timeline.empty();
@@ -37,7 +54,139 @@ odoo.define('website_donation_meter.animation', function (require) {
 
             return $.when(this._super.apply(this, arguments), def);
         },
+        //--------------------------------------------------------------------------
+        // Handlers
+        //--------------------------------------------------------------------------
 
+        /**
+         * @private
+         */
+        _onClickDonate100: function () {
+            this._rpc({
+                route: "/shop/cart/update_json",
+                params: {
+                    product_id: 8,
+                    add_qty: 1
+                },
+            }).then(function (data) {
+                window.location = '/shop/checkout?express=1';
+            });
+        },
+
+        /**
+         * @private
+         */
+        _onClickDonate50: function () {
+            this._rpc({
+                route: "/shop/cart/update_json",
+                params: {
+                    product_id: 7,
+                    add_qty: 1
+                },
+            }).then(function (data) {
+                window.location = '/shop/checkout?express=1';
+            });
+        },
+
+        /**
+         * @private
+         */
+        _onClickDonate20: function () {
+            this._rpc({
+                route: "/shop/cart/update_json",
+                params: {
+                    product_id: 5,
+                    add_qty: 1
+                },
+            }).then(function (data) {
+                window.location = '/shop/checkout?express=1';
+            });
+        },
+
+        /**
+         * @private
+         */
+        _onClickDonate10: function () {
+            this._rpc({
+                route: "/shop/cart/update_json",
+                params: {
+                    product_id: 4,
+                    add_qty: 1
+                },
+            }).then(function (data) {
+                window.location = '/shop/checkout?express=1';
+            });
+        },
+
+        /**
+         * @private
+         */
+        _onClickDonate5: function () {
+            this._rpc({
+                route: "/shop/cart/update_json",
+                params: {
+                    product_id: 3,
+                    add_qty: 1
+                },
+            }).then(function (data) {
+                window.location = '/shop/checkout?express=1';
+            });
+        },
+
+        /**
+         * @private
+         */
+        _onClickDonateOtherFinal: function (ev) {
+            ev.preventDefault();
+            var $link = $(ev.currentTarget);
+            var $input = $link.parent().parent().find("input");
+            var value = parseFloat($input.val() || 0, 10);
+            this._rpc({
+                route: "/shop/cart/update_json",
+                params: {
+                    product_id: 6,
+                    add_qty: value
+                },
+            }).then(function (data) {
+                window.location = '/shop/checkout?express=1';
+            });
+        },
+
+        /**
+         * @private
+         */
+        _onClickDonateOther: function () {
+            if (this.$("#btn_don_other").is(":visible")) {
+                this.$("#btn_don_other").hide();
+                this.$("#btn_don_other_final").show();
+            } else {
+                this.$("#btn_don_other").show();
+                this.$("#btn_don_other_final").hide();
+            }
+        },
+
+        /**
+         * @private
+         * @param {MouseEvent} ev
+         */
+        _onClickAddCartJSON: function (ev) {
+            this.onClickAddCartJSON(ev);
+        },
+
+        /**
+         * @private
+         * @param {Event} ev
+         */
+        _onChangeDonQuantity: function (ev) {
+            var $input = $(ev.target);
+            var value = parseFloat($input.val() || 0, 10);
+            if (isNaN(value)){
+                value = 0;
+            }
+            var $text = $input.parent().next().find("font");
+            // TODO missing translation
+            $text.text("Faire un don de " + value + "$");
+        },
     });
 });
 
@@ -102,14 +251,3 @@ function thermometer(goalAmount, progressAmount, animate) {
         $progress.find(".amount").fadeIn(500);
     }
 }
-
-$(document).ready(function () {
-
-    //call without the parameters to have it read from the DOM
-    // thermometer();
-    // or with parameters if you want to update it using JavaScript.
-    // you can update it live, and choose whether to show the animation
-    // (which you might not if the updates are relatively small)
-    //thermometer( 1000000, 425610, false );
-
-});
